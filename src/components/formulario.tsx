@@ -1,7 +1,8 @@
-import { FormEvent, useContext } from "react";
+import { FormEvent, useContext, useState } from "react";
 import { useForm } from "../hooks/useForm";
 import { InputForm } from "./input-form";
 import { Paciente, PacientesContext } from "../context/PacientesContext";
+import { schemaFormAddPaciente } from "./validations/schema-form-add-paciente";
 
 
 
@@ -13,6 +14,7 @@ export const Formulario = () => {
 
   const {agregarPaciente} = useContext(PacientesContext)
 
+  const [errors, setErrors] = useState<FormValues>({} as FormValues)
 
   const {formValues, handleChange, reset} = useForm<FormValues>({
     mascota: "",
@@ -26,6 +28,25 @@ export const Formulario = () => {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
 
+    const resultado = schemaFormAddPaciente.validate(formValues, {
+      abortEarly : false,
+    });
+
+    if(resultado.error) {
+
+      setErrors(resultado.error.details.reduce((acc, err) => {
+        const inputName = err.context?.key as string;
+        const message = err.message;
+        return{
+          ...acc,
+          [inputName]: message,
+        }
+      }, {} as FormValues))
+
+      return
+      
+    }
+
     const newPaciente = {
       id : crypto.randomUUID(),
       ...formValues
@@ -34,6 +55,8 @@ export const Formulario = () => {
 
     agregarPaciente(newPaciente)
 
+
+    setErrors({} as FormValues)
 
     reset()
 
@@ -55,6 +78,7 @@ export const Formulario = () => {
               placeholder="Nombre de la mascota"
               onChange={handleChange}
               value={mascota}
+              error={errors.mascota}
           />
           <InputForm
               label="Raza"
@@ -63,6 +87,8 @@ export const Formulario = () => {
               placeholder="Raza de la mascota"
               onChange={handleChange}
               value={raza}
+              error={errors.raza}
+
          />
           <InputForm
               label="Dueño"
@@ -71,6 +97,8 @@ export const Formulario = () => {
               placeholder="Nombre y apelldio del Dueño"
               onChange={handleChange}
               value={duenio}
+              error={errors.duenio}
+
           />
           <InputForm
               label="Email"
@@ -79,6 +107,8 @@ export const Formulario = () => {
               placeholder="Email de contacto"
               onChange={handleChange}
               value={email}
+              error={errors.email}
+
           />
 
         <button 
